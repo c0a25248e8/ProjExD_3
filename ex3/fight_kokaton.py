@@ -89,7 +89,7 @@ class Beam:
     """
     こうかとんが放つビームに関するクラス
     """
-    def __init__(self, bird:"Bird"):
+    def __init__(self, bird: "Bird"):
         """
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん（Birdインスタンス）
@@ -105,9 +105,9 @@ class Beam:
         ビームを速度ベクトルself.vx, self.vyに基づき移動させる
         引数 screen：画面Surface
         """
-        if check_bound(self.rct) == (True, True):
-            self.rct.move_ip(self.vx, self.vy)
-            screen.blit(self.img, self.rct)    
+        # 画面内かどうかにかかわらず、常に移動して描画を行う（修正ポイント）
+        self.rct.move_ip(self.vx, self.vy)
+        screen.blit(self.img, self.rct)    
 
 
 class Bomb:
@@ -141,23 +141,32 @@ class Bomb:
         screen.blit(self.img, self.rct)
 
 
+class Score:
+    def __init__(self):
+        self.fonto = pg.font.Font(None, 50)  # サイズ50
+        self.color = (0, 0, 255)            # 青
+        self.score = 0                      # 初期値
+        self.img = self.fonto.render(f"Score: {self.score}", 0, self.color)
+        self.rct = self.img.get_rect()
+        self.rct.center = (100, HEIGHT - 50) # 画面左下の座標に配置
+
+    def update(self, screen: pg.Surface):
+        # スコアが変わるたびに文字画像を新しく作り直す
+        self.img = self.fonto.render(f"Score: {self.score}", 0, self.color)
+        self.screen_rct = screen.blit(self.img, self.rct)
+
+
 def main():
     score = Score()
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
-    # bomb = Bomb((255, 0, 0), 10)
-    # bombs = []
-    # for _ in range(NUM_OF_BOMBS):
-    #     bomb = Bomb((255, 0, 0), 10)
-    #     bombs.append(bomb)
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
 
     beam = []  # ゲーム初期化時にはビームは存在しない
     clock = pg.time.Clock()
     tmr = 0
-    
 
     while True:
         for event in pg.event.get():
@@ -188,11 +197,11 @@ def main():
                         bombs[i] = None  # 当たった爆弾を消去マーク
                         score.score += 1
 
-        # 2. 空（None）になった要素や、画面外に出たビームをリストから綺麗に削除する
+        # 空（None）になった要素や、画面外に出たビームをリストから綺麗に削除する
         bombs = [bomb for bomb in bombs if bomb is not None]
         beam = [b for b in beam if b is not None and check_bound(b.rct) == (True, True)]
 
-        # 3. 各キャラクターの移動と描画
+        # 各キャラクターの移動と描画
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
         
@@ -206,21 +215,7 @@ def main():
         pg.display.update()
         tmr += 1
         clock.tick(50)
-        
 
-class Score:
-    def __init__(self):
-        self.fonto = pg.font.Font(None, 50)  # サイズ50
-        self.color = (0, 0, 255)            # 青
-        self.score = 0                      # 初期値
-        self.img = self.fonto.render(f"Score: {self.score}", 0, self.color)
-        self.rct = self.img.get_rect()
-        self.rct.center = (100, HEIGHT - 50) # 画面左下の座標に配置
-
-    def update(self, screen: pg.Surface):
-        # スコアが変わるたびに文字画像を新しく作り直す
-        self.img = self.fonto.render(f"Score: {self.score}", 0, self.color)
-        screen.blit(self.img, self.rct)
 
 if __name__ == "__main__":
     pg.init()
